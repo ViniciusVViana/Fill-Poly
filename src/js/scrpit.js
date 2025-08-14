@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 const drawButton = document.getElementById("desenharBtn");
 const polyListView = document.getElementById("listaPoligonos");
 const preencherPoligono = document.getElementById("preencherPoligono");
+const limparTela = document.getElementById("clearButton")
 
 // DEFINE A RESOLUÇÃO EM PIXEL DO CANVAS PARA O TAMANHO DEFINIDO NO CSS
 canvas.width = canvas.clientWidth * window.devicePixelRatio;
@@ -38,11 +39,48 @@ drawButton.addEventListener("click", function() {
         drawButton.textContent = "Parar";
         canvas.style.pointerEvents = "auto"; // desabilita eventos de clique
     }else{
+        // VERIFICA SE O POLÍGONO TEM PELO MENOS 3 VÉRTICES
+        if (poly.length < 3) {
+            alert("Erro: Um polígono precisa de pelo menos 3 vértices.");
+            // Limpa os pontos já desenhados no canvas que não formaram um polígono
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            poly = []; // limpa o array de vértices atual
+            
+            // Redesenha os polígonos que já estavam na lista
+            polyList.forEach(poligonoObj => {
+                const vertices = poligonoObj.vertices;
+                // Desenha as arestas
+                for (let i = 0; i < vertices.length; i++) {
+                    const currentPoint = vertices[i];
+                    const nextPoint = vertices[(i + 1) % vertices.length];
+                    drawPoint(currentPoint.x, currentPoint.y);
+                    drawLine(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y);
+                }
+                
+                // Se o polígono já estava preenchido, preenche de novo
+                if (poligonoObj.isFilled) {
+                    fillPoly(vertices);
+                }
+            });
+
+            // Reseta o botão para o estado inicial de desenho
+            draw = true;
+            drawButton.textContent = "Desenhar";
+            canvas.style.pointerEvents = "none";
+            return; // Interrompe a execução para não salvar o polígono inválido
+        }
+
         draw = true;
         drawButton.textContent = "Desenhar";
         canvas.style.pointerEvents = "none"; // habilita eventos de clique
         drawLine(poly[poly.length - 1].x, poly[poly.length - 1].y, poly[0].x, poly[0].y); // PINTA A ARESTA FINAL DO POLIGONO
-        polyList.push([...poly]); // adiciona o polígono atual à lista
+
+        // Cria um objeto para o polígono
+        const novoPoligono = {
+            vertices: [...poly], // adiciona o polígono atual à lista
+            isFilled: false // seta flag de preenchimento
+        };
+        polyList.push(novoPoligono); // adiciona o novo objeto à lista
         poly = []
     }
 })
@@ -66,14 +104,35 @@ canvas.addEventListener("click", function(e) {
     }
 });
 
-// experimental para testar o fillpoly
+// PREENCHE OS POLIGONOS
 preencherPoligono.addEventListener("click", function() {
     
-    fillPoly(polyList[0])
+    for(let i = 0; i < polyList.length; i++){
+        const poligonoAtual = polyList[i];
+
+        // Só preenche se o polígono ainda não foi preenchido
+        if (!poligonoAtual.isFilled) {
+            fillPoly(poligonoAtual.vertices); // Passa apenas os vértices para a função
+            poligonoAtual.isFilled = true; // Marca como preenchido
+        }
+    }
+    
 
 });
 
-// Implementação do algoritmo de preenchimento por scanline
+
+// LIMPA A TELA
+limparTela.addEventListener("click", function() {
+
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    poly = [];
+    polyList = [];
+    console.log(poly);
+    console.log(polyList);
+
+});
+
+// ALGORITMO DE FILLPOLY
 function fillPoly(pontos) {
     // Encontra yMin e yMax do polígono
     let yMin = Infinity;
@@ -165,7 +224,9 @@ function fillPoly(pontos) {
         const xFim = Math.floor(pontosX[j + 1]);
 
         if (xInicio < xFim) {
-            ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
+            // pinta a linha
+            //ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
+            drawLine(xInicio, scanline, xFim, scanline, corPreenchimento);
         }
             
             
