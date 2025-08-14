@@ -1,4 +1,3 @@
-// obter elemento canvas e contexto
 const canvas = document.getElementById("tela");
 const ctx = canvas.getContext("2d");
 const drawButton = document.getElementById("desenharBtn");
@@ -21,6 +20,7 @@ function drawPoint(x, y, color = 'black', radius = 1) {
     ctx.fill();
 }
 
+// PINTA A LINHA
 function drawLine(x1, y1, x2, y2, color = 'black', width = 1) {
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
@@ -30,6 +30,7 @@ function drawLine(x1, y1, x2, y2, color = 'black', width = 1) {
     ctx.stroke();
 }
 
+// BOTAO PARA ATIVAR E DESATIVAR O DESENHO
 drawButton.addEventListener("click", function() {
     if (draw) {
         draw = false;
@@ -39,13 +40,13 @@ drawButton.addEventListener("click", function() {
         draw = true;
         drawButton.textContent = "Desenhar";
         canvas.style.pointerEvents = "none"; // habilita eventos de clique
-        drawLine(poly[poly.length - 1].x, poly[poly.length - 1].y, poly[0].x, poly[0].y);
+        drawLine(poly[poly.length - 1].x, poly[poly.length - 1].y, poly[0].x, poly[0].y); // PINTA A ARESTA FINAL DO POLIGONO
         polyList.push([...poly]); // adiciona o polígono atual à lista
         poly = []
     }
 })
 
-// Listener no elemento canvas (não no contexto)
+// LISTENER DO CANVAS
 canvas.addEventListener("click", function(e) {
     const rect = canvas.getBoundingClientRect();
     // corrige para casos onde canvas é redimensionado via CSS (scaling)
@@ -57,10 +58,8 @@ canvas.addEventListener("click", function(e) {
     drawPoint(x, y);
     poly.push({ x, y });
 
+    // PINTA AS LINHAS A PARTIR DO SEGUNDO PONTO
     if (poly.length > 1) {
         drawLine(poly[poly.length - 2].x, poly[poly.length - 2].y, x, y);
     }
 });
-
-// debug opcional
-// console.log('canvas size', canvas.width, canvas.height);
