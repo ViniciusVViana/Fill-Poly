@@ -122,7 +122,7 @@ function fillPoly(pontos) {
         const yfim = Math.floor(inferior.y);
         
         // Para cada scanline entre y e yfim
-        while (y <= yfim) {
+        while (y < yfim) {
             // Calcula o índice da scanline
             const indScanline = y - Math.floor(yMin);
             
@@ -136,31 +136,42 @@ function fillPoly(pontos) {
             // Incrementa y para a próxima scanline
             y++;
         }
+
     }
     
     // cores de preenchimento
     const corPreenchimento = document.getElementById('inputPree').value; // vai virar uma funcao que pinta de acordo com a interpolacao das cores dos vertices
     ctx.fillStyle = corPreenchimento;
 
+
     // Ordena as interseções para cada scanline e preenche os segmentos
     for (let i = 0; i < numScanlines; i++) {
         const scanline = Math.floor(yMin) + i;
         const pontosX = intersecoes[i];
         
+        // Pula se não tem interseções
         if (pontosX.length === 0) continue;
-        
+
         // Ordena as interseções em ordem crescente de x
+        pontosX.sort((a, b) => a - b);
+
         pontosX.sort((a, b) => a - b);
         
         // Preenche entre pares de interseções
-        for (let j = 0; j < pontosX.length; j += 2) {
-            const xInicio = Math.floor(pontosX[j]);
-            const xFim = Math.floor(pontosX[j + 1]);
+        for (let j = 0; j < pontosX.length - 1; j += 2) {
+
+           
+        const xInicio = Math.ceil(pontosX[j]);
+        const xFim = Math.floor(pontosX[j + 1]);
+
+        if (xInicio < xFim) {
+            ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
+        }
             
-            if (xInicio < xFim) {
-                ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
-            }
+            
+            
         }
     }
     
 }
+
