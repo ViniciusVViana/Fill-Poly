@@ -19,23 +19,24 @@ body{
     display: flex;
     flex-direction: row;
     align-self: center;
-    width: 1000px;
+    justify-content: space-between;
+    width: 80dvw;
     height: 500px;
-    border: solid 2px black;
     margin: 0;
 }
 
 #tela{
-    width: 700px;
+    width: 70%;
     height: 500px;
+    border: solid 2px black;
 }
 
 #paletas{
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 20%;
     height: 500px;
-    border-left: solid 2px black;
+    border: solid 2px black;
 }
 
 .cor{
