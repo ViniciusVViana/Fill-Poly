@@ -1,0 +1,65 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    height: 100dvh;
+}
+
+#titulo{
+    text-align: center;
+    margin: 2dvh 0 0 0;
+    position: absolute;
+    top: 0;
+}
+
+#fillpoly{
+    display: flex;
+    flex-direction: row;
+    align-self: center;
+    width: 1000px;
+    height: 500px;
+    border: solid 2px black;
+    margin: 0;
+}
+
+#tela{
+    width: 700px;
+    height: 500px;
+}
+
+#paletas{
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    height: 500px;
+    border-left: solid 2px black;
+}
+
+.cor{
+    display: flex;
+    flex-direction: column;
+    padding: 5%;
+}
+
+.showCor{
+    text-align: center;
+    border: solid 1px black;
+}
+
+#lista{
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+    height: 100%;
+}
+
+#paletas p{
+    text-align: center;
+}
+
+.choo{
+    width: 100%;
+}
