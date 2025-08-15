@@ -163,14 +163,28 @@ function addPolyToListView(poligono, numero) {
     listItem.className = 'list-group-item'; 
     listItem.id = `list-item-${numero - 1}`;
 
-    // 2. Cada vértice recebe uma string em html
+    // Cada vértice recebe uma string em html
     const verticesHTML = poligono.vertices.map((vertice, index) => {
         const x = Math.round(vertice.x);
         const y = Math.round(vertice.y);
-        return `<li>Vértice ${index + 1}: (${x}, ${y})</li>`;
-    }).join(''); // trasnforma o array de strings em uma string 
 
-    // 3. Monta a estrutura HTML interna do item da lista
+        // Pega a cor atual do vértice e a converte para CSS
+        const corAtual = rgbToCss(vertice.cor);
+
+        return `
+            <li>
+                <span 
+                    class="color-indicator" 
+                    style="background-color: ${rgbToCss(vertice.cor)};"
+                    data-poly-index="${numero - 1}" 
+                    data-vertex-index="${index}"
+                    title="Clique para aplicar a cor selecionada a este vértice"
+                ></span>
+                Vértice ${index + 1}: (${x}, ${y})
+            </li>
+        `;}).join(''); // trasnforma o array de strings em uma string 
+
+    // Monta a estrutura HTML interna do item da lista
     listItem.innerHTML = `
         <div class="polygon-header">
             <strong>Polígono ${numero}</strong>
@@ -180,10 +194,42 @@ function addPolyToListView(poligono, numero) {
         </ul>
     `;
     
-    // 4. Adiciona o item completo à lista na página
+    // Adiciona o item completo à lista na página
     polyListView.appendChild(listItem);
 }
 
+polyListView.addEventListener('click', function(event) {
+    
+    // PASSO 1: Descobrir EXATAMENTE qual elemento HTML foi clicado.
+    const target = event.target;
+
+    // PASSO 2: Foi uma das nossas "bolinhas de cor"? 
+    // (Se não for, não fazemos nada).
+    if (target && target.classList.contains('color-indicator')) {
+        
+        // PASSO 3: Se foi uma bolinha, QUAL delas? 
+        // Lemos os "crachás" (data-attributes) para obter os índices.
+        const polyIndex = parseInt(target.dataset.polyIndex, 10);
+        const vertexIndex = parseInt(target.dataset.vertexIndex, 10);
+
+        // PASSO 4: Qual é a NOVA cor? 
+        // Olhamos no seletor de cor principal e a preparamos.
+        const novaCorHex = document.getElementById('inputCorVert').value;
+        const novaCorRgb = hexToRgb(novaCorHex);
+
+        // PASSO 5: Os dados são válidos? (Medida de segurança).
+        if (!isNaN(polyIndex) && !isNaN(vertexIndex) && polyList[polyIndex]) {
+            
+            // PASSO 6: Agora, a ação principal: ATUALIZAR o dado mestre.
+            polyList[polyIndex].vertices[vertexIndex].cor = novaCorRgb;
+
+            // PASSO 7: Dar um feedback visual para o usuário.
+            // (Mudamos a cor da bolinha na lista e redesenhamos o canvas).
+            target.style.backgroundColor = novaCorHex;
+            redrawAll();
+        }
+    }
+});
 
 
 // ALGORITMO DE FILLPOLY
