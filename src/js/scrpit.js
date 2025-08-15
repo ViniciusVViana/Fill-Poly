@@ -3,7 +3,8 @@ const ctx = canvas.getContext("2d");
 const drawButton = document.getElementById("desenharBtn");
 const polyListView = document.getElementById("listaPoligonos");
 const preencherPoligono = document.getElementById("preencherPoligono");
-const limparTela = document.getElementById("clearButton")
+const limparTela = document.getElementById("clearButton");
+const excluirPoligono = document.getElementById("deletarPoligono");
 
 // DEFINE A RESOLUÇÃO EM PIXEL DO CANVAS PARA O TAMANHO DEFINIDO NO CSS
 canvas.width = canvas.clientWidth * window.devicePixelRatio;
@@ -13,6 +14,7 @@ canvas.height = canvas.clientHeight * window.devicePixelRatio;
 let poly = [];
 let polyList = [];
 let draw = true;
+let poligonoSelecionado = null; // Guarda o ÍNDICE do polígono selecionado
 
 // PINTA O PONTO
 function drawPoint(x, y, color = 'black', radius = 1) {
@@ -186,7 +188,11 @@ function addPolyToListView(poligono, numero) {
 
     // Monta a estrutura HTML interna do item da lista
     listItem.innerHTML = `
-        <div class="polygon-header">
+        <div 
+            class="polygon-header"
+            data-poly-select-index="${numero - 1}"
+            title="Clique para selecionar este polígono"
+        >
             <strong>Polígono ${numero}</strong>
         </div>
         <ul class="vertex-list">
@@ -228,9 +234,53 @@ polyListView.addEventListener('click', function(event) {
             target.style.backgroundColor = novaCorHex;
             redrawAll();
         }
+    } // checa se um clique foi em um cabeçalho de poligono 
+    else if (target && target.closest('.polygon-header')) {
+        const header = target.closest('.polygon-header');
+        const polyIndex = parseInt(header.dataset.polySelectIndex, 10);
+
+        // Remove a seleção anterior (se houver)
+        const allHeaders = document.querySelectorAll('.polygon-header');
+        allHeaders.forEach(h => h.classList.remove('selected'));
+
+        // Adiciona a classe 'selected' ao cabeçalho clicado
+        header.classList.add('selected');
+
+        // ATUALIZA O ESTADO GLOBAL
+        poligonoSelecionado = polyIndex;
+
+        console.log(`Polígono ${poligonoSelecionado + 1} selecionado.`);
     }
 });
 
+excluirPoligono.addEventListener('click', function() {
+    // 1. Verifica se um polígono está realmente selecionado
+    if (poligonoSelecionado === null) {
+        alert("Nenhum polígono selecionado. Clique no nome de um polígono na lista para selecioná-lo.");
+        return;
+    }
+
+    // 2. Remove o polígono do array de dados usando seu índice.
+    // array.splice(índice, quantidade) remove elementos do array.
+    polyList.splice(poligonoSelecionado, 1);
+    
+    // 3. Reseta a seleção, pois o polígono não existe mais.
+    poligonoSelecionado = null;
+
+    // 4. ATUALIZA TODA A UI:
+    // Limpa a lista HTML antiga
+    polyListView.innerHTML = '';
+    // Recria a lista HTML com os dados atualizados
+    // (os índices serão reajustados automaticamente)
+    polyList.forEach((poly, index) => {
+        addPolyToListView(poly, index + 1);
+    });
+
+    // Redesenha o canvas com os polígonos restantes.
+    redrawAll();
+
+    console.log("Polígono excluído com sucesso.");
+});
 
 // ALGORITMO DE FILLPOLY
 function fillPoly(pontos) {
