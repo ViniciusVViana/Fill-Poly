@@ -57,6 +57,28 @@ body{
     height: 100%;
 }
 
+.vertex-list {
+    list-style-type: none; /* Esconde a bolinha padrão */
+    padding-left: 20px; /* Ajusta o recuo que some com o list-style-type */
+}
+
+
+.color-indicator {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #777;
+    border-radius: 50%; /* Deixa a bolinha redonda */
+    cursor: pointer;
+    vertical-align: middle;
+    margin-right: 8px;
+    transition: transform 0.1s ease;
+}
+
+.color-indicator:hover {
+    transform: scale(1.2); /* Efeito para indicar que é clicável */
+}
+
 #paletas p{
     text-align: center;
 }
