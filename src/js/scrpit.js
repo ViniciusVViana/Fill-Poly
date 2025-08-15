@@ -81,6 +81,7 @@ drawButton.addEventListener("click", function() {
             isFilled: false // seta flag de preenchimento
         };
         polyList.push(novoPoligono); // adiciona o novo objeto à lista
+        addPolyToListView(novoPoligono, polyList.length)
         poly = []
     }
 })
@@ -127,10 +128,41 @@ limparTela.addEventListener("click", function() {
     ctx.clearRect(0,0, canvas.width, canvas.height);
     poly = [];
     polyList = [];
+    polyListView.innerHTML = ''; // Remove todos os itens da lista
     console.log(poly);
     console.log(polyList);
 
 });
+
+// ADICIONA POLÍGONO NA LISTA DA TELA
+function addPolyToListView(poligono, numero) {
+    // Cria o elemento de lista 'li' que servirá como container
+    const listItem = document.createElement('li');
+    listItem.className = 'list-group-item'; 
+    listItem.id = `list-item-${numero - 1}`;
+
+    // 2. cada vértices recebe uma string em html
+    const verticesHTML = poligono.vertices.map((vertice, index) => {
+        const x = Math.round(vertice.x);
+        const y = Math.round(vertice.y);
+        return `<li>Vértice ${index + 1}: (${x}, ${y})</li>`;
+    }).join(''); // trasnforma o array de strings em uma string 
+
+    // 3. Monta a estrutura HTML interna do item da lista
+    listItem.innerHTML = `
+        <div class="polygon-header">
+            <strong>Polígono ${numero}</strong>
+        </div>
+        <ul class="vertex-list">
+            ${verticesHTML}
+        </ul>
+    `;
+    
+    // 4. Adiciona o item completo à lista na página
+    polyListView.appendChild(listItem);
+}
+
+
 
 // ALGORITMO DE FILLPOLY
 function fillPoly(pontos) {
