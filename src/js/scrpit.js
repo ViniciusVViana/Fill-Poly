@@ -32,6 +32,34 @@ function drawLine(x1, y1, x2, y2, color = 'black', width = 1) {
     ctx.stroke();
 }
 
+// FUNÇÃO PARA REDESENHAR POLÍGONOS
+function redrawAll() {
+    // Limpa completamente o canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Itera sobre cada polígono na lista principal
+    polyList.forEach(poligonoObj => {
+        const vertices = poligonoObj.vertices;
+
+        // Desenha as arestas e os vértices do polígono
+        for (let i = 0; i < vertices.length; i++) {
+            const currentPoint = vertices[i];
+            const nextPoint = vertices[(i + 1) % vertices.length];
+            
+            // Desenha o vértice com a sua cor correta
+            drawPoint(currentPoint.x, currentPoint.y, rgbToCss(currentPoint.cor), 3);
+
+            // Desenha a aresta 
+            drawLine(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y);
+        }
+
+        // Se o polígono já estava preenchido, preenche de novo 
+        if (poligonoObj.isFilled) {
+            fillPoly(vertices);
+        }
+    });
+}
+
 // BOTAO PARA ATIVAR E DESATIVAR O DESENHO
 drawButton.addEventListener("click", function() {
     if (draw) {
@@ -45,24 +73,11 @@ drawButton.addEventListener("click", function() {
             alert("Erro: Um polígono precisa de pelo menos 3 vértices.");
             // Limpa os pontos já desenhados no canvas que não formaram um polígono
             ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
             poly = []; // limpa o array de vértices atual
             
             // Redesenha os polígonos que já estavam na lista
-            polyList.forEach(poligonoObj => {
-                const vertices = poligonoObj.vertices;
-                // Desenha as arestas
-                for (let i = 0; i < vertices.length; i++) {
-                    const currentPoint = vertices[i];
-                    const nextPoint = vertices[(i + 1) % vertices.length];
-                    drawPoint(currentPoint.x, currentPoint.y, corVertHex, 3);
-                    drawLine(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y);
-                }
-                
-                // Se o polígono já estava preenchido, preenche de novo
-                if (poligonoObj.isFilled) {
-                    fillPoly(vertices);
-                }
-            });
+            redrawAll();
 
             // Reseta o botão para o estado inicial de desenho
             draw = true;
