@@ -39,6 +39,7 @@ drawButton.addEventListener("click", function() {
         drawButton.textContent = "Parar";
         canvas.style.pointerEvents = "auto"; // desabilita eventos de clique
     }else{
+
         // VERIFICA SE O POLÍGONO TEM PELO MENOS 3 VÉRTICES
         if (poly.length < 3) {
             alert("Erro: Um polígono precisa de pelo menos 3 vértices.");
@@ -53,7 +54,7 @@ drawButton.addEventListener("click", function() {
                 for (let i = 0; i < vertices.length; i++) {
                     const currentPoint = vertices[i];
                     const nextPoint = vertices[(i + 1) % vertices.length];
-                    drawPoint(currentPoint.x, currentPoint.y);
+                    drawPoint(currentPoint.x, currentPoint.y, corVertHex, 3);
                     drawLine(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y);
                 }
                 
@@ -78,7 +79,7 @@ drawButton.addEventListener("click", function() {
         // Cria um objeto para o polígono
         const novoPoligono = {
             vertices: [...poly], // adiciona o polígono atual à lista
-            isFilled: false // seta flag de preenchimento
+            isFilled: false, // seta flag de preenchimento
         };
         polyList.push(novoPoligono); // adiciona o novo objeto à lista
         addPolyToListView(novoPoligono, polyList.length)
@@ -94,9 +95,15 @@ canvas.addEventListener("click", function(e) {
     const scaleY = canvas.height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
-    console.log('Ponto desenhado em:', x, y);
-    drawPoint(x, y);
-    poly.push({ x, y });
+   
+
+    const corVertHex = document.getElementById('inputCorVert').value; // Pega a cor selecionada no input
+    const corVertRgb = hexToRgb(corVertHex); // converte de Hex para RGB para interpolar depois
+    
+    console.log('Ponto desenhado em:', x, y, 'com a cor', corVertHex);
+
+    drawPoint(x, y, corVertHex, 3); // desenha o ponto com a cor escolhida e raio maior
+    poly.push({ x, y, cor: corVertRgb}); // adiciona uma referencia a cor do vertice dentro do atributo vertices
     console.log(poly); // teste
 
     // PINTA AS LINHAS A PARTIR DO SEGUNDO PONTO
@@ -141,7 +148,7 @@ function addPolyToListView(poligono, numero) {
     listItem.className = 'list-group-item'; 
     listItem.id = `list-item-${numero - 1}`;
 
-    // 2. cada vértices recebe uma string em html
+    // 2. Cada vértice recebe uma string em html
     const verticesHTML = poligono.vertices.map((vertice, index) => {
         const x = Math.round(vertice.x);
         const y = Math.round(vertice.y);
@@ -174,12 +181,14 @@ function fillPoly(pontos) {
         if (ponto.y < yMin) yMin = ponto.y;
         if (ponto.y > yMax) yMax = ponto.y;
     }
+
+    // trunca os valores para poder calcular inteiros
+    yMin = Math.floor(yMin)
+    yMax = Math.floor(yMax)
     
     // Número de scanlines (linhas horizontais)
-    const numScanlines = Math.floor(yMax - yMin) + 1;
+    const numScanlines = yMax - yMin + 1;
  
-
-    
     // Array para armazenar as interseções para cada scanline
     const intersecoes = Array(numScanlines).fill().map(() => []);
     
@@ -201,6 +210,9 @@ function fillPoly(pontos) {
             superior = p2;
             inferior = p1;
         }
+
+        console.log(superior.cor); // teste
+        console.log(inferior.cor); // teste
         
         // Calcula incremento Tx = dx/dy (1/m)
         const dy = inferior.y - superior.y;
@@ -215,11 +227,19 @@ function fillPoly(pontos) {
         // Para cada scanline entre y e yfim
         while (y < yfim) {
             // Calcula o índice da scanline
-            const indScanline = y - Math.floor(yMin);
-            
+            const indScanline = y - yMin;
+  
             // Armazena a interseção se estiver dentro dos limites
             if (indScanline >= 0 && indScanline < numScanlines) {
-                intersecoes[indScanline].push(x);
+
+                // Fator de interpolação vertical (t_vertical)
+                const t_vertical = (y - superior.y) / dy;
+
+                // Interpola a cor na aresta para a scanline atual
+                const corNaAresta = interpolateColor(superior.cor, inferior.cor, t_vertical);
+                
+                intersecoes[indScanline].push({x: x, cor: corNaAresta});
+
             }
             
             // Incrementa a taxa para x para a próxima scanline
@@ -229,37 +249,50 @@ function fillPoly(pontos) {
         }
 
     }
-    
-    // cores de preenchimento
-    const corPreenchimento = document.getElementById('inputPree').value; // vai virar uma funcao que pinta de acordo com a interpolacao das cores dos vertices
-    ctx.fillStyle = corPreenchimento;
 
 
     // Ordena as interseções para cada scanline e preenche os segmentos
     for (let i = 0; i < numScanlines; i++) {
-        const scanline = Math.floor(yMin) + i;
+        const scanline = yMin + i;
         const pontosX = intersecoes[i];
         
-        // Pula se não tem interseções
-        if (pontosX.length === 0) continue;
+        // Evita interseções erradas
+        if (pontosX.length < 2) continue;
 
         // Ordena as interseções em ordem crescente de x
-        pontosX.sort((a, b) => a - b);
+        pontosX.sort((a, b) => a.x - b.x);
 
-        pontosX.sort((a, b) => a - b);
-        
         // Preenche entre pares de interseções
         for (let j = 0; j < pontosX.length - 1; j += 2) {
-
+            // armazena valor bruto para interpolacao
+            const xStart = pontosX[j];
+            const xEnd = pontosX[j + 1];
            
-        const xInicio = Math.ceil(pontosX[j]);
-        const xFim = Math.floor(pontosX[j + 1]);
+            // armazena valor truncado para trabalhar com inteiros
+            const xInicio = Math.ceil(xStart.x);
+            const xFim = Math.floor(xEnd.x);
 
-        if (xInicio < xFim) {
-            // pinta a linha
-            //ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
-            drawLine(xInicio, scanline, xFim, scanline, corPreenchimento);
-        }
+            larguraSegmento = xEnd.x - xStart.x;
+            // if (xInicio < xFim) {
+
+            //     //ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
+            //     // pinta a linha
+            //     drawLine(xInicio, scanline, xFim, scanline, corPreenchimento);
+            // }
+
+            // pinta pixel a pixel
+            for (let x = xInicio; x < xFim; x++) {
+                // Fator de interpolação horizontal (t_horizontal)
+                const t_horizontal = (larguraSegmento === 0) ? 0 : (x - xStart.x) / larguraSegmento;
+
+                // Interpola a cor ao longo da scanline
+                const corPixel = interpolateColor(xStart.cor, xEnd.cor, t_horizontal);
+                
+                corPreenchimento = rgbToCss(corPixel);
+                drawLine(x, scanline, x + 1, scanline, corPreenchimento);
+                // ctx.fillStyle = rgbToCss(corPixel);
+                // ctx.fillRect(x, scanlineY, 1, 1); // Desenha um único pixel
+            }
             
             
             
@@ -268,3 +301,27 @@ function fillPoly(pontos) {
     
 }
 
+
+// Converte uma cor hexadecimal para um objeto RGB.
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+// Converte um objeto RGB para uma string de cor CSS.
+function rgbToCss(rgb) {
+    return `rgb(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)})`;
+}
+
+// Interpola linearmente entre duas cores.
+function interpolateColor(color1, color2, t) {
+    return {
+        r: color1.r * (1 - t) + color2.r * t,
+        g: color1.g * (1 - t) + color2.g * t,
+        b: color1.b * (1 - t) + color2.b * t
+    };
+}
