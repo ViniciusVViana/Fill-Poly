@@ -113,7 +113,6 @@ canvas.addEventListener("click", function(e) {
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
    
-
     const corVertHex = document.getElementById('inputCorVert').value; // Pega a cor selecionada no input
     const corVertRgb = hexToRgb(corVertHex); // converte de Hex para RGB para interpolar depois
     
@@ -142,20 +141,16 @@ preencherPoligono.addEventListener("click", function() {
         }
     }
     
-
 });
-
 
 // LIMPA A TELA
 limparTela.addEventListener("click", function() {
-
     ctx.clearRect(0,0, canvas.width, canvas.height);
     poly = [];
     polyList = [];
     polyListView.innerHTML = ''; // Remove todos os itens da lista
     console.log(poly);
     console.log(polyList);
-
 });
 
 // ADICIONA POLÍGONO NA LISTA DA TELA
@@ -350,7 +345,6 @@ function fillPoly(pontos) {
                 const corNaAresta = interpolateColor(superior.cor, inferior.cor, t_vertical);
                 
                 intersecoes[indScanline].push({x: x, cor: corNaAresta});
-
             }
             
             // Incrementa a taxa para x para a próxima scanline
@@ -360,7 +354,6 @@ function fillPoly(pontos) {
         }
 
     }
-
 
     // Ordena as interseções para cada scanline e preenche os segmentos
     for (let i = 0; i < numScanlines; i++) {
@@ -404,14 +397,9 @@ function fillPoly(pontos) {
                 // ctx.fillStyle = rgbToCss(corPixel);
                 // ctx.fillRect(x, scanlineY, 1, 1); // Desenha um único pixel
             }
-            
-            
-            
         }
     }
-    
 }
-
 
 // Converte uma cor hexadecimal para um objeto RGB.
 function hexToRgb(hex) {
