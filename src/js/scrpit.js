@@ -437,12 +437,3 @@ function hexToRgb(hex) {
 function rgbToCss(rgb) {
     return `rgb(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)})`;
 }
-
-// Interpola linearmente entre duas cores.
-function interpolateColor(color1, color2, t) {
-    return {
-        r: color1.r * (1 - t) + color2.r * t,
-        g: color1.g * (1 - t) + color2.g * t,
-        b: color1.b * (1 - t) + color2.b * t
-    };
-}
