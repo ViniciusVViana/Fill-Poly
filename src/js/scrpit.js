@@ -293,7 +293,7 @@ function fillPoly(pontos) {
     yMax = Math.floor(yMax)
     
     // Número de scanlines (linhas horizontais)
-    const numScanlines = yMax - yMin + 1;
+    const numScanlines = yMax - yMin;
  
     // Array para armazenar as interseções para cada scanline
     const intersecoes = Array(numScanlines).fill().map(() => []);
@@ -325,10 +325,26 @@ function fillPoly(pontos) {
         const dx = inferior.x - superior.x;
         const Tx = dx / dy;
         
+        // MUDANÇA: Calcular o incremento de cor por scanline (dCor/dy)
+        const dCor_dy = {
+            r: (inferior.cor.r - superior.cor.r) / dy,
+            g: (inferior.cor.g - superior.cor.g) / dy,
+            b: (inferior.cor.b - superior.cor.b) / dy
+        };
+        
         // Calcula interseções para cada scanline
         let x = superior.x; // x do menor y
         let y = Math.floor(superior.y);
         const yfim = Math.floor(inferior.y);
+        
+        // MUDANÇA: Inicializar a cor atual com a cor do vértice superior.
+        // É preciso ajustar para o primeiro pixel da scanline, não para o vértice em si.
+        const yOffset = y - superior.y;
+        let corAtual = {
+             r: superior.cor.r + dCor_dy.r * yOffset,
+             g: superior.cor.g + dCor_dy.g * yOffset,
+             b: superior.cor.b + dCor_dy.b * yOffset
+        };
         
         // Para cada scanline entre y e yfim
         while (y < yfim) {
@@ -337,20 +353,19 @@ function fillPoly(pontos) {
   
             // Armazena a interseção se estiver dentro dos limites
             if (indScanline >= 0 && indScanline < numScanlines) {
-
-                // Fator de interpolação vertical (t_vertical)
-                const t_vertical = (y - superior.y) / dy;
-
-                // Interpola a cor na aresta para a scanline atual
-                const corNaAresta = interpolateColor(superior.cor, inferior.cor, t_vertical);
                 
-                intersecoes[indScanline].push({x: x, cor: corNaAresta});
+                intersecoes[indScanline].push({x: x, cor: {...corAtual} });
             }
             
             // Incrementa a taxa para x para a próxima scanline
             x += Tx;
             // Incrementa y para a próxima scanline
             y++;
+            
+            // MUDANÇA: Incrementamos a cor para a próxima scanline
+            corAtual.r += dCor_dy.r;
+            corAtual.g += dCor_dy.g;
+            corAtual.b += dCor_dy.b;
         }
 
     }
@@ -377,28 +392,35 @@ function fillPoly(pontos) {
             const xFim = Math.floor(xEnd.x);
 
             larguraSegmento = xEnd.x - xStart.x;
-            // if (xInicio < xFim) {
-
-            //     //ctx.fillRect(xInicio, scanline, xFim - xInicio, 1); // coord inicial x, coord inicial y, largura, altura
-            //     // pinta a linha
-            //     drawLine(xInicio, scanline, xFim, scanline, corPreenchimento);
-            // }
+            if(larguraSegmento <= 0){continue}
+            // MUDANÇA: Calcular o incremento de cor por pixel (dCor/dx)
+            const dCor_dx = {
+                r: (xEnd.cor.r - xStart.cor.r) / larguraSegmento,
+                g: (xEnd.cor.g - xStart.cor.g) / larguraSegmento,
+                b: (xEnd.cor.b - xStart.cor.b) / larguraSegmento
+            };
+            
+            const xOffset = xInicio - xStart.x;
+            let corPixel = {
+                r: xStart.cor.r + dCor_dx.r * xOffset,
+                g: xStart.cor.g + dCor_dx.g * xOffset,
+                b: xStart.cor.b + dCor_dx.b * xOffset
+            };
+          
 
             // pinta pixel a pixel
             for (let x = xInicio; x < xFim; x++) {
-                // Fator de interpolação horizontal (t_horizontal)
-                const t_horizontal = (larguraSegmento === 0) ? 0 : (x - xStart.x) / larguraSegmento;
-
-                // Interpola a cor ao longo da scanline
-                const corPixel = interpolateColor(xStart.cor, xEnd.cor, t_horizontal);
                 
                 corPreenchimento = rgbToCss(corPixel);
                 drawLine(x, scanline, x + 1, scanline, corPreenchimento);
-                // ctx.fillStyle = rgbToCss(corPixel);
-                // ctx.fillRect(x, scanlineY, 1, 1); // Desenha um único pixel
+                
+                // MUDANÇA: Incrementar a cor para o próximo pixel
+                corPixel.r += dCor_dx.r;
+                corPixel.g += dCor_dx.g;
+                corPixel.b += dCor_dx.b;
             }
-        }
-    }
+        }
+    }
 }
 
 // Converte uma cor hexadecimal para um objeto RGB.
